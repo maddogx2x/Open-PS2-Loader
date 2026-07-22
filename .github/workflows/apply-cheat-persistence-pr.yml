@@ -1,0 +1,48 @@
+name: Apply cheat persistence PR patch
+
+on:
+  push:
+    branches:
+      - agent/cheat-selection-persistence
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cheat-selection-persistence-publisher
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/cheat-selection-persistence
+          fetch-depth: 0
+
+      - name: Apply upstream-only patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f .github/cheat-selection-persistence.patch ]; then
+            echo "Patch not present yet; nothing to apply."
+            exit 0
+          fi
+          patch -p1 < .github/cheat-selection-persistence.patch
+          rm .github/cheat-selection-persistence.patch
+          rm .github/workflows/apply-cheat-persistence-pr.yml
+
+      - name: Commit upstream-only implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet && git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Persist per-game cheat selections"
+          git push origin agent/cheat-selection-persistence
