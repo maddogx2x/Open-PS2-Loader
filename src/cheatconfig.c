@@ -26,7 +26,7 @@ static void normalizeCheatName(const char *source, char *destination, size_t des
             continue;
         }
 
-        if (pendingSpace && output + 1 < destinationSize) {
+        if (pendingSpace) {
             destination[output++] = SPACE;
             pendingSpace = 0;
         }
